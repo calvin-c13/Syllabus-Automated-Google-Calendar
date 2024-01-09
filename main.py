@@ -27,9 +27,8 @@ exam_existence_bool = False
 #LOOK AT THIS
 #LOOK AT THIS
 #google calendar time zone input COME BACK TO THIS
-time_zone_input = input("What is your school's time zone? (ex: EST, CST...): ").lower()
-time_zone_for_calendar = time_zone_input[0]
-
+""" time_zone_input = input("What is your school's time zone? (ex: EST, CST...): ").lower()
+time_zone_for_calendar = time_zone_input[0] """
 
 
 
@@ -43,11 +42,16 @@ def find_first_course_code(pdf_file):
 
     if match:
         course_name = match.group()
-        print(course_name)
-        
+    
+    real_course_name = input(f'Course name: {course_name} \nCorrect name? (yes/no): ').lower()
+    if real_course_name[0] == 'n':
+        course_name = input('Correct course name: ')
+    
+    return course_name
 
 
-def instruction_mode(pdf_file, lower_text):
+
+def instruction_mode(lower_text):
     #initializing instruction mode
     in_person = False
     online_synch = False
@@ -64,48 +68,47 @@ def instruction_mode(pdf_file, lower_text):
         return 'online_asynch'
     elif online_synch:
         return 'online_synch'
-    elif in_person:
-        return 'in_person'
     else:
-        return None  # None if none of the conditions are True
-
+        return 'in_person'
 
 
 
 #Obtain existence of lab
-def lab_existence(pdf_file, lower_text):
+def lab_existence(lower_text):
+    lab_existence_bool = False
     lab_words = ['lab ', 'labs ']
+
     #searching for lab in text
     for word in lab_words:
         if word in lower_text:
             lab_existence_bool = True
-            return(lab_existence_bool)
-        else:
-            return ('lab - no')
+            break
+    return lab_existence_bool
 
 
 #Obtain existence of quizzes
-def quiz_existence(pdf_file, lower_text):
+def quiz_existence(lower_text):
+    quiz_existence_bool = False
     quiz_words = ['quiz ', 'quizzes ']
+
     #searching for quiz in text
     for word in quiz_words:
         if word in lower_text:
             quiz_existence_bool = True
-            return(quiz_existence_bool)
-        else:
-            return ('quiz - no')
+            break
+    return quiz_existence_bool
 
 
 #Obtain existence of exams
-def exam_existence(pdf_file, lower_text):
-    exam_words = ['midterm', 'exam', 'final exam ', 'final ']
+def exam_existence(lower_text):
+    exam_words = ['midterm', 'exam', 'final exam ', 'final ', 'final project', 'final draft']
+    
     #searching for exam in text
     for word in exam_words:
         if word in lower_text:
             exam_existence_bool = True
-            return(exam_existence_bool)
-        else:
-            return ('exam - no')
+            break
+    return exam_existence_bool
 
 
 #Iterating over each pdf file in the folder
@@ -118,11 +121,13 @@ def iterate_over_pdf(folder_name):
 
         lower_text = extract_text(pdf_file).lower()
 
-        find_first_course_code(pdf_file)
-        print(instruction_mode(pdf_file, lower_text))
-        print(lab_existence(pdf_file, lower_text))
-        print(quiz_existence(pdf_file, lower_text))
-        print(exam_existence(pdf_file, lower_text))
+        print(find_first_course_code(pdf_file))
+        instruction_mode(lower_text)
+        course_instruction_mode = instruction_mode(lower_text)
+        print(course_instruction_mode)
+        print(lab_existence(lower_text))
+        print(quiz_existence(lower_text))
+        print(exam_existence(lower_text))
 
 # Specify the folder name
 folder_name = 'syllabus examples'
