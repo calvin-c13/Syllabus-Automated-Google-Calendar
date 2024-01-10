@@ -9,21 +9,81 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from pdfminer.high_level import extract_text
 
+# Define the scopes and credentials file
+SCOPES = ['https://www.googleapis.com/auth/calendar.events']
+credentials_file = input('Enter the path to your credentials.json file: ')
 
 
-#LOOK AT THIS
-#LOOK AT THIS
-#LOOK AT THIS
-#LOOK AT THIS
-#LOOK AT THIS
-#LOOK AT THIS
-#LOOK AT THIS
-#LOOK AT THIS
-#LOOK AT THIS
-#LOOK AT THIS
-#google calendar time zone input COME BACK TO THIS
-""" time_zone_input = input("What is your school's time zone? (ex: EST, CST...): ").lower()
-time_zone_for_calendar = time_zone_input[0] """
+def get_google_calendar_service():
+    # Authenticate and authorize the application
+    flow = InstalledAppFlow.from_client_secrets_file(credentials_file, SCOPES)
+    credentials = flow.run_local_server(port=0)
+
+    # Build the service
+    service = build('calendar', 'v3', credentials=credentials)
+    return service
+
+
+
+
+
+
+
+# Define the scopes and credentials file
+SCOPES = ['https://www.googleapis.com/auth/calendar.events']
+""" credentials_file = '/Users/calvin/Downloads/Computer Science coding projects/Google Calendar Automatic Events Syllabus/credentials.json'  # Replace with your credentials file"""
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+allowed_input = ['E', 'C', 'M', 'P']
+
+while True:
+    time_zone_input = input("What is your school's time zone? (ex: EST, CST...): ").upper()
+    time_zone_input = time_zone_input[0]
+    if time_zone_input in allowed_input:
+        # Map the time zone input to the corresponding time zone used for the calendar
+        time_zone_mapping = {
+            'E': 'America/New_York',
+            'C': 'America/Chicago',
+            'M': 'America/Denver',
+            'P': 'America/Los_Angeles'
+        }
+
+        # Set the time_zone_used_for_calendar variable based on the mapping
+        time_zone_used_for_calendar = time_zone_mapping.get(time_zone_input)
+        break  
+    else:
+        print("Invalid time zone input. Please enter a valid time zone.")
+
+
+
 
 date_of_last_class = input('Date of last day of classes (format: YYYY-MM-DD): ')
 
@@ -32,6 +92,9 @@ year, month, day = date_of_last_class.split('-')
 year = int(year)
 month = int(month)
 day = int(day)
+
+#Used for Google Calendar API function
+recurrence_end_date = date_of_last_class.replace('-', '')
 
 
 
@@ -93,7 +156,7 @@ def get_days(prompt):
 
         # Check if all input days are valid
         if all(day[0:2].upper() in valid_days for day in input_days):
-            return [day[0:2].upper() for day in input_days]
+            return ','.join(day[0:2].upper() for day in input_days)
         else:
             print('Invalid input. Please enter valid days.')
 
@@ -152,6 +215,29 @@ def number_of_exams():
 
 
 
+def lecture_recurring_event(course_name, start_time, end_time, lecture_location, first_lecture, lecture_days, service):
+
+    event = {
+        'summary': f'{course_name} Lecture {start_time} - {end_time} {lecture_location}',
+        'start': {
+            'dateTime': f'{first_lecture}T{start_time}:00',
+            'timeZone': time_zone_used_for_calendar, 
+        },
+        'end': {
+            'dateTime': f'{first_lecture}T{end_time}:00',
+            'timeZone': time_zone_used_for_calendar,
+        },
+        'recurrence': [f'RRULE:FREQ=WEEKLY;BYDAY={lecture_days};UNTIL={recurrence_end_date}'],
+        'colorId': '5'
+    }
+
+    # Insert the event into the calendar
+    calendar_id = 'primary'  # Use 'primary' for the user's primary calendar
+    event = service.events().insert(calendarId=calendar_id, body=event).execute()
+
+
+
+
 
 #Iterating over each pdf file in the folder
 def iterate_over_pdf(folder_name):
@@ -169,6 +255,7 @@ def iterate_over_pdf(folder_name):
 
         # Lecture prompt
         if course_instruction_mode == 'in_person' or course_instruction_mode == 'online_synch':
+            first_lecture = input('Date of first lecture (format: YYYY-MM-DD): ')
             lecture_days = get_days('Lecture meeting day(s) (separated by spaces, ex: "sun tues thurs"): ')
             start_and_end_time('Lecture start time (HH:MM): ', 'Lecture end time (HH:MM): ')
 
@@ -180,6 +267,7 @@ def iterate_over_pdf(folder_name):
         print(lab_existence(lower_text))
         # Lab prompts if applicable
         if lab_existence(lower_text):
+            first_lab = input('Date of first lab (format: YYYY-MM-DD): ')
             lab_days = get_days('Lab meeting day(s) (separated by spaces, ex: "sun tues thurs"): ')
             start_and_end_time('Lab start time (HH:MM): ', 'Lab end time (HH:MM): ')
             lab_location = input('Lab location: ')
@@ -195,6 +283,34 @@ def iterate_over_pdf(folder_name):
         if exam_existence(lower_text):
             number_of_exams()
         
+        if course_instruction_mode == 'in-person':
+            lecture_recurring_event(course_name, start_time, end_time, lecture_location, first_lecture, lecture_days, service)
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
