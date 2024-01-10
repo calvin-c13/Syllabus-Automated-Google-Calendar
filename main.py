@@ -11,11 +11,6 @@ from pdfminer.high_level import extract_text
 
 
 
-""" #initializing lab, quiz, and exam existence
-lab_existence_bool = False
-quiz_existence_bool = False
-exam_existence_bool = False """
-
 #LOOK AT THIS
 #LOOK AT THIS
 #LOOK AT THIS
@@ -29,6 +24,14 @@ exam_existence_bool = False """
 #google calendar time zone input COME BACK TO THIS
 """ time_zone_input = input("What is your school's time zone? (ex: EST, CST...): ").lower()
 time_zone_for_calendar = time_zone_input[0] """
+
+date_of_last_class = input('Date of last day of classes (format: YYYY-MM-DD): ')
+
+# Split the input string into year, month, and day
+year, month, day = date_of_last_class.split('-')
+year = int(year)
+month = int(month)
+day = int(day)
 
 
 
@@ -53,68 +56,32 @@ def find_first_course_code(pdf_file):
             break
         else:
             print("Invalid input. Please enter 'yes' or 'no'.")
-
     return course_name
 
 
 
 
 def instruction_mode(lower_text):
-    #initializing instruction mode
-    in_person = False
-    online_synch = False
-    online_asynch = False
-
     if 'asynchronous' in lower_text:
-        online_asynch = True
-    elif 'synchronous' in lower_text:
-        online_synch = True
-    else:
-        in_person = True
-
-    # Return the variable that is True
-    if online_asynch:
         return 'online_asynch'
-    elif online_synch:
+    elif 'synchronous' in lower_text:
         return 'online_synch'
     else:
         return 'in_person'
 
 
 
-#Obtain existence of lab
+
 def lab_existence(lower_text):
-    lab_words = ['lab ', 'labs ']
+    return any(word in lower_text for word in ['lab ', 'labs '])
 
-    # searching for lab in text
-    for word in lab_words:
-        if word in lower_text:
-            return True
-
-    return False
-
-#Obtain existence of quizzes
 def quiz_existence(lower_text):
-    quiz_words = ['quiz ', 'quizzes ']
+    return any(word in lower_text for word in ['quiz ', 'quizzes '])
 
-    #searching for quiz in text
-    for word in quiz_words:
-        if word in lower_text:
-            return  True
-
-    return False
-
-
-#Obtain existence of exams
 def exam_existence(lower_text):
     exam_words = ['midterm', 'exam', 'final exam ', 'final ', 'final project', 'final draft']
+    return any(word in lower_text for word in exam_words)
 
-    #searching for exam in text
-    for word in exam_words:
-        if word in lower_text:
-            return True
-
-    return False
 
 
 #run if instruction_mode is in person or online synch
@@ -128,7 +95,7 @@ def get_days(prompt):
         if all(day[0:2].upper() in valid_days for day in input_days):
             return [day[0:2].upper() for day in input_days]
         else:
-            print("Invalid input. Please enter valid days.")
+            print('Invalid input. Please enter valid days.')
 
 
 def start_and_end_time(start_prompt, end_prompt):
@@ -138,12 +105,53 @@ def start_and_end_time(start_prompt, end_prompt):
             end_time = input(end_prompt)
 
             # Validate the format of start and end time
-            datetime.strptime(start_time, "%H:%M")
-            datetime.strptime(end_time, "%H:%M")
+            datetime.strptime(start_time, '%H:%M')
+            datetime.strptime(end_time, '%H:%M')
 
             return start_time, end_time
         except ValueError:
-            print("Invalid input. Please enter valid military time (HH:MM).")
+            print('Invalid input. Please enter valid military time (HH:MM).')
+
+
+
+
+def number_of_quizzes():
+    quantity_of_quizzes = int(input('Number of quizzes: '))
+    list_of_quiz_dates = {}
+
+    for quiz_number in range(1, quantity_of_quizzes + 1):
+        quiz_date = input(f'Quiz {quiz_number} date (format: MM-DD): ')
+        list_of_quiz_dates[f'Quiz {quiz_number} date'] = quiz_date
+
+    return list_of_quiz_dates
+
+
+
+
+def number_of_exams():
+    quantity_of_exams = int(input('Number of exams (including final exam): '))
+    list_of_exam_dates = {}
+
+    for exam_number in range(1, quantity_of_exams):
+        exam_date = input(f'Midterm {exam_number} date (format: MM-DD): ')
+        list_of_exam_dates[f'Midterm {exam_number} date'] = exam_date
+
+    # If there is only one exam left, treat it as the final exam
+    if quantity_of_exams > 0:
+        final_exam_date = input('Final exam date (format: MM-DD): ')
+        final_start_time, final_end_time = start_and_end_time('Final exam start time (HH:MM): ', 'Final exam end time (HH:MM): ')
+
+        list_of_exam_dates['Final exam date'] = final_exam_date
+        list_of_exam_dates['Final exam start time'] = final_start_time
+        list_of_exam_dates['Final exam end time'] = final_end_time
+
+    return list_of_exam_dates
+
+
+
+
+
+
 
 #Iterating over each pdf file in the folder
 def iterate_over_pdf(folder_name):
@@ -151,36 +159,48 @@ def iterate_over_pdf(folder_name):
     pdf_files = glob.glob(pdf_pattern)
 
     for pdf_file in pdf_files:
+        #delete later
         print(end = '\n')
 
         lower_text = extract_text(pdf_file).lower()
 
         print(find_first_course_code(pdf_file))
         course_instruction_mode = instruction_mode(lower_text)
-        print(course_instruction_mode)
 
         # Lecture prompt
         if course_instruction_mode == 'in_person' or course_instruction_mode == 'online_synch':
-            lecture_days = get_days('Enter lecture meeting day(s) (separated by spaces, ex: "sun tues thurs"): ')
-            start_and_end_time("Enter lecture start time (HH:MM): ", "Enter lecture end time (HH:MM): ")
+            lecture_days = get_days('Lecture meeting day(s) (separated by spaces, ex: "sun tues thurs"): ')
+            start_and_end_time('Lecture start time (HH:MM): ', 'Lecture end time (HH:MM): ')
+
+        if course_instruction_mode == 'in-person':
+            lecture_location = input('Lecture location: ')
+
 
 
         print(lab_existence(lower_text))
-        # Lab prompt if applicable
+        # Lab prompts if applicable
         if lab_existence(lower_text):
-            lab_days = get_days('Enter lab meeting day(s) (separated by spaces, ex: "sun tues thurs"): ')
-            start_and_end_time("Enter lab start time (HH:MM): ", "Enter lab end time (HH:MM): ")
+            lab_days = get_days('Lab meeting day(s) (separated by spaces, ex: "sun tues thurs"): ')
+            start_and_end_time('Lab start time (HH:MM): ', 'Lab end time (HH:MM): ')
+            lab_location = input('Lab location: ')
+
 
         print(quiz_existence(lower_text))
-        
+        #Quiz prompts if applicable
+        if quiz_existence(lower_text):
+            number_of_quizzes()
 
         print(exam_existence(lower_text))
+        #Exam prompts if applicable
+        if exam_existence(lower_text):
+            number_of_exams()
         
 
 
 
 
 # Specify the folder name
+#make it input('Enter the folder name that contains your course syllabuses: ')
 folder_name = 'syllabus examples'
 iterate_over_pdf(folder_name)
 
