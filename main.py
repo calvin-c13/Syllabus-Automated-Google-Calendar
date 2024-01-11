@@ -9,61 +9,41 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from pdfminer.high_level import extract_text
 
-# Define the scopes and credentials file
-SCOPES = ['https://www.googleapis.com/auth/calendar.events']
-credentials_file = input('Enter the path to your credentials.json file: ')
+# Define {the scopes and credentials file
+SCOPES =['https://www.googleapis.com/auth/calendar']
+credentials_file = input('Enter the path to your credentials.json file: ') #User input to their credentials.json
+
+def main():
+    cred = None
+
+    if os.path.exists('token.json'):
+        creds = Credentials.from_authorized_user_file('token.json')
+    
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
+            creds = flow.run_local_server(port=0)
+
+        with open('token.json', 'w') as token:
+            token.write(creds.to_json())
+
+    try:
+        service = build('calendar', 'v3', credentials=creds)
+        return service
+
+    except HttpError as error:
+        print('An error has occurred: ', error)
+
+service = main()
 
 
-def get_google_calendar_service():
-    # Authenticate and authorize the application
-    flow = InstalledAppFlow.from_client_secrets_file(credentials_file, SCOPES)
-    credentials = flow.run_local_server(port=0)
-
-    # Build the service
-    service = build('calendar', 'v3', credentials=credentials)
-    return service
-
-
-
-
-
-
-
-# Define the scopes and credentials file
-SCOPES = ['https://www.googleapis.com/auth/calendar.events']
-""" credentials_file = '/Users/calvin/Downloads/Computer Science coding projects/Google Calendar Automatic Events Syllabus/credentials.json'  # Replace with your credentials file"""
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# Specify the folder name
+folder_name = input('Enter the folder name containing your syllabuses: ')
 
 
 allowed_input = ['E', 'C', 'M', 'P']
-
 while True:
     time_zone_input = input("What is your school's time zone? (ex: EST, CST...): ").upper()
     time_zone_input = time_zone_input[0]
@@ -86,6 +66,7 @@ while True:
 
 
 date_of_last_class = input('Date of last day of classes (format: YYYY-MM-DD): ')
+print('\n')
 
 # Split the input string into year, month, and day
 year, month, day = date_of_last_class.split('-')
@@ -173,7 +154,7 @@ def start_and_end_time(start_prompt, end_prompt):
 
             return start_time, end_time
         except ValueError:
-            print('Invalid input. Please enter valid military time (HH:MM).')
+            print('Invalid input. Please enter valid military time (format - HH:MM).')
 
 
 
@@ -184,7 +165,7 @@ def number_of_quizzes():
 
     for quiz_number in range(1, quantity_of_quizzes + 1):
         quiz_date = input(f'Quiz {quiz_number} date (format: MM-DD): ')
-        list_of_quiz_dates[f'Quiz {quiz_number} date'] = quiz_date
+        list_of_quiz_dates[f'Quiz {quiz_number}'] = quiz_date
 
     return list_of_quiz_dates
 
@@ -197,38 +178,74 @@ def number_of_exams():
 
     for exam_number in range(1, quantity_of_exams):
         exam_date = input(f'Midterm {exam_number} date (format: MM-DD): ')
-        list_of_exam_dates[f'Midterm {exam_number} date'] = exam_date
+        list_of_exam_dates[f'Midterm {exam_number}'] = exam_date
+    
+    # Initialize final_start_time and final_end_time
+    final_start_time, final_end_time = None, None
 
     # If there is only one exam left, treat it as the final exam
     if quantity_of_exams > 0:
         final_exam_date = input('Final exam date (format: MM-DD): ')
-        final_start_time, final_end_time = start_and_end_time('Final exam start time (HH:MM): ', 'Final exam end time (HH:MM): ')
+        final_start_time, final_end_time = start_and_end_time('Final exam start time (format - HH:MM): ', 'Final exam end time (format - HH:MM): ')
 
-        list_of_exam_dates['Final exam date'] = final_exam_date
-        list_of_exam_dates['Final exam start time'] = final_start_time
-        list_of_exam_dates['Final exam end time'] = final_end_time
+    # Filter out 'final exam start time' and 'final exam end time'
+    only_midterm_exam_dates = {key: value for key, value in list_of_exam_dates.items() if key not in ['Final exam start time', 'Final exam end time']}
 
-    return list_of_exam_dates
-
+    return only_midterm_exam_dates, final_exam_date, final_start_time, final_end_time
 
 
 
 
 
+
+
+
+#Google Calendar Event Functions
 def lecture_recurring_event(course_name, start_time, end_time, lecture_location, first_lecture, lecture_days, service):
-
     event = {
         'summary': f'{course_name} Lecture {start_time} - {end_time} {lecture_location}',
         'start': {
-            'dateTime': f'{first_lecture}T{start_time}:00',
+            'dateTime': f'{year}-{first_lecture}T{start_time}:00',
             'timeZone': time_zone_used_for_calendar, 
         },
         'end': {
-            'dateTime': f'{first_lecture}T{end_time}:00',
+            'dateTime': f'{year}-{first_lecture}T{end_time}:00',
             'timeZone': time_zone_used_for_calendar,
         },
         'recurrence': [f'RRULE:FREQ=WEEKLY;BYDAY={lecture_days};UNTIL={recurrence_end_date}'],
-        'colorId': '5'
+        'colorId': '5',
+        'reminders': {
+            'useDefault': False,
+            'overrides': [
+                {'method': 'popup', 'minutes': 60},  # Notification 1 hour before event
+            ],
+        },
+    }
+
+    # Insert the event into the calendar
+    calendar_id = 'primary'  # Use 'primary' for the user's primary calendar
+    event = service.events().insert(calendarId=calendar_id, body=event).execute()
+
+
+def online_synch_lecture_recurring_event(course_name, start_time, end_time, first_lecture, lecture_days, service):
+    event = {
+        'summary': f'{course_name} Online Lecture {start_time} - {end_time}',
+        'start': {
+            'dateTime': f'{year}-{first_lecture}T{start_time}:00',
+            'timeZone': time_zone_used_for_calendar, 
+        },
+        'end': {
+            'dateTime': f'{year}-{first_lecture}T{end_time}:00',
+            'timeZone': time_zone_used_for_calendar,
+        },
+        'recurrence': [f'RRULE:FREQ=WEEKLY;BYDAY={lecture_days};UNTIL={recurrence_end_date}'],
+        'colorId': '5',
+        'reminders': {
+            'useDefault': False,
+            'overrides': [
+                {'method': 'popup', 'minutes': 60},  # Notification 1 hour before event
+            ],
+        },
     }
 
     # Insert the event into the calendar
@@ -239,87 +256,181 @@ def lecture_recurring_event(course_name, start_time, end_time, lecture_location,
 
 
 
+
+
+
+
+def lab_recurring_event(course_name, start_time, end_time, lab_location, first_lab, lab_days, service):
+    event = {
+        'summary': f'{course_name} Lab {start_time} - {end_time} {lab_location}',
+        'start': {
+            'dateTime': f'{year}-{first_lab}T{start_time}:00',
+            'timeZone': time_zone_used_for_calendar, 
+        },
+        'end': {
+            'dateTime': f'{year}-{first_lab}T{end_time}:00',
+            'timeZone': time_zone_used_for_calendar,
+        },
+        'recurrence': [f'RRULE:FREQ=WEEKLY;BYDAY={lab_days};UNTIL={recurrence_end_date}'],
+        'colorId': '5',
+        'reminders': {
+            'useDefault': False,
+            'overrides': [
+                {'method': 'popup', 'minutes': 60},  # Notification 1 hour before event
+            ],
+        },
+    }
+
+    # Insert the event into the calendar
+    calendar_id = 'primary'  # Use 'primary' for the user's primary calendar
+    event = service.events().insert(calendarId=calendar_id, body=event).execute()
+
+
+
+
+def quiz_calendar_event(course_name, quiz_number, lecture_start_time, lecture_end_time, lecture_location, quiz_date):
+    event = {
+        'summary': f'{course_name} {quiz_number} {lecture_location}',
+        'start': {
+            'dateTime': f'{year}-{quiz_date}T{lecture_start_time}:00',
+            'timeZone': 'EST',
+        },
+        'end': {
+            'dateTime': f'{year}-{quiz_date}T{lecture_end_time}:00',
+            'timeZone': 'EST',
+        },
+        'colorId': '11',
+        'reminders': {
+            'useDefault': False,
+            'overrides': [
+                {'method': 'popup', 'minutes': 7 * 24 * 60},  # Notification 1 week before event
+            ],
+        },
+    }
+
+    # Insert the event into the calendar
+    calendar_id = 'primary'  # Use 'primary' for the user's primary calendar
+    event = service.events().insert(calendarId=calendar_id, body=event).execute()
+
+
+
+def midterm_calendar_event(course_name, exam_number, lecture_start_time, lecture_end_time, lecture_location, exam_date):
+    event = {
+        'summary': f'{course_name} {exam_number} {lecture_start_time} - {lecture_end_time} {lecture_location}',
+        'start': {
+            'dateTime': f'{year}-{exam_date}T{lecture_start_time}:00',
+            'timeZone': 'EST',
+        },
+        'end': {
+            'dateTime': f'{year}-{exam_date}T{lecture_end_time}:00',
+            'timeZone': 'EST',
+        },
+        'colorId': '11',
+        'reminders': {
+            'useDefault': False,
+            'overrides': [
+                {'method': 'popup', 'minutes': 14 * 24 * 60},  # Notification 2 week before event
+            ],
+        },
+    }
+
+    # Insert the event into the calendar
+    calendar_id = 'primary'  # Use 'primary' for the user's primary calendar
+    event = service.events().insert(calendarId=calendar_id, body=event).execute()
+
+
+def final_exam_calendar_event(course_name, final_start_time, final_end_time, lecture_location, final_exam_date):
+    event = {
+        'summary': f'{course_name} Final Exam {final_start_time} - {final_end_time} {lecture_location}',
+        'start': {
+            'dateTime': f'{year}-{final_exam_date}T{final_start_time}:00',
+            'timeZone': 'EST',
+        },
+        'end': {
+            'dateTime': f'{year}-{final_exam_date}T{final_end_time}:00',
+            'timeZone': 'EST',
+        },
+        'colorId': '11',
+        'reminders': {
+            'useDefault': False,
+            'overrides': [
+                {'method': 'popup', 'minutes': 14 * 24 * 60},  # Notification 2 week before event
+            ],
+        },
+    }
+
+    # Insert the event into the calendar
+    calendar_id = 'primary'  # Use 'primary' for the user's primary calendar
+    event = service.events().insert(calendarId=calendar_id, body=event).execute()
+
+
+
+
 #Iterating over each pdf file in the folder
-def iterate_over_pdf(folder_name):
+def iterate_over_pdf(folder_name, service):
     pdf_pattern = os.path.join(folder_name, '*.pdf')
     pdf_files = glob.glob(pdf_pattern)
 
     for pdf_file in pdf_files:
-        #delete later
-        print(end = '\n')
 
         lower_text = extract_text(pdf_file).lower()
 
-        print(find_first_course_code(pdf_file))
+        course_name = find_first_course_code(pdf_file)
+        print('\n' + course_name)
         course_instruction_mode = instruction_mode(lower_text)
 
         # Lecture prompt
         if course_instruction_mode == 'in_person' or course_instruction_mode == 'online_synch':
-            first_lecture = input('Date of first lecture (format: YYYY-MM-DD): ')
+            first_lecture = input('Date of first lecture (format: MM-DD): ')
             lecture_days = get_days('Lecture meeting day(s) (separated by spaces, ex: "sun tues thurs"): ')
-            start_and_end_time('Lecture start time (HH:MM): ', 'Lecture end time (HH:MM): ')
+            lecture_start_time, lecture_end_time = start_and_end_time('Lecture start time (format - HH:MM): ', 'Lecture end time (format - HH:MM): ')
 
-        if course_instruction_mode == 'in-person':
+        if course_instruction_mode == 'in_person':
             lecture_location = input('Lecture location: ')
+            lecture_recurring_event(course_name, lecture_start_time, lecture_end_time, lecture_location, first_lecture, lecture_days, service)
 
+        if course_instruction_mode == 'online_synch':
+            online_synch_lecture_recurring_event(course_name, lecture_start_time, lecture_end_time, first_lecture, lecture_days, service)
 
-
-        print(lab_existence(lower_text))
+        lab_existence(lower_text)
         # Lab prompts if applicable
         if lab_existence(lower_text):
-            first_lab = input('Date of first lab (format: YYYY-MM-DD): ')
+            print('\n')
+            first_lab = input('Date of first lab (format: MM-DD): ')
             lab_days = get_days('Lab meeting day(s) (separated by spaces, ex: "sun tues thurs"): ')
-            start_and_end_time('Lab start time (HH:MM): ', 'Lab end time (HH:MM): ')
+            lab_start_time, lab_end_time = start_and_end_time('Lab start time (format - HH:MM): ', 'Lab end time (format - HH:MM): ')
             lab_location = input('Lab location: ')
+            lab_recurring_event(course_name, lab_start_time, lab_end_time, lab_location, first_lab, lab_days, service)
 
 
-        print(quiz_existence(lower_text))
+
+
+
+        quiz_existence(lower_text)
         #Quiz prompts if applicable
         if quiz_existence(lower_text):
-            number_of_quizzes()
+            print('\n')
+            quizzes = number_of_quizzes()
+            for quiz_number, quiz_date in quizzes.items():
+                    quiz_calendar_event(course_name, quiz_number, lecture_start_time, lecture_end_time, lecture_location, quiz_date)
 
-        print(exam_existence(lower_text))
+        exam_existence(lower_text)
         #Exam prompts if applicable
         if exam_existence(lower_text):
-            number_of_exams()
+            print('\n')
+            # Call the function and unpack the returned values
+            only_midterm_exam_dates, final_exam_date, final_start_time, final_end_time = number_of_exams()
+            for exam_number, exam_date in only_midterm_exam_dates.items():
+                midterm_calendar_event(course_name, exam_number, lecture_start_time, lecture_end_time, lecture_location, exam_date)
+        final_exam_calendar_event(course_name, final_start_time, final_end_time, lecture_location, final_exam_date)
         
-        if course_instruction_mode == 'in-person':
-            lecture_recurring_event(course_name, start_time, end_time, lecture_location, first_lecture, lecture_days, service)
-
-        
+        print(end = '\n')
 
 
 
+iterate_over_pdf(folder_name, service)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Specify the folder name
-#make it input('Enter the folder name that contains your course syllabuses: ')
-folder_name = 'syllabus examples'
-iterate_over_pdf(folder_name)
-
+print('ALL DONE!')
 
 
 
