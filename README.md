@@ -12,12 +12,12 @@ Before using this script, make sure you have the following:
    - [Download Python](https://www.python.org/downloads/) if not already installed.
 
 2. **Google Developer OAuth Client ID Credentials:**
-   - Obtain OAuth client ID credentials by following instructions from the [Google Calendar API Quickstart](https://developers.google.com/calendar/api/quickstart/python#authorize_credentials_for_a_desktop_application).
+   - Obtain OAuth client ID credentials and token.json by following instructions from the [Google Calendar API Quickstart](https://developers.google.com/calendar/api/quickstart/python).
 
 3. **Folder with course syllabuses in pdf form**
    - Ensure that all the courses you want to add to Google Calendar are in a single folder and are in pdf form.
 
-4. **Ensure the python script, credentials.json, and folder containing syllabuses are in the same working directory**
+4. **Ensure the python script, credentials.json, token.json, and folder containing syllabuses are in the same working directory**
    
 ## Usage
 
@@ -32,9 +32,10 @@ Before using this script, make sure you have the following:
 
 3. **Install Required Modules**
    ```bash
-   pip install pdfminer.six google-auth google-auth-oauthlib google-auth-httplib2 --upgrade charset_normalizer
+   pip install pdfminer.six google-auth google-auth-oauthlib google-auth-httplib2
    pip install google-api-python-client
-
+   pip uninstall charset_normalizer 
+   pip install --no-binary :all: charset_normalizer
 4. **Run the Python Script**
    ```bash
    python3 main.py
