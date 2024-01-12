@@ -28,7 +28,7 @@ Before using this script, make sure you have the following:
 
 2. **Install Required Modules**
    ```bash
-   pip install pdfminer.six google-auth google-auth-oauthlib google-auth-httplib2
+   pip install pdfminer.six google-auth google-auth-oauthlib google-auth-httplib2 --upgrade charset_normalizer
 
 3. **Run the Python Script**
    ```bash
