@@ -23,7 +23,7 @@ Before using this script, make sure you have the following:
 
 1. **Clone the Repository:**
    ```bash
-   git clone https://github.com/calvin-c13/sylabus-automated-google-calendar.git
+   git clone https://github.com/calvin-c13/syllabus-automated-google-calendar.git
    cd syllabus-automated-google-calendar
 
 2. **Install Required Modules**
