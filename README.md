@@ -19,10 +19,11 @@ Before using this script, make sure you have the following:
 1. **Clone the Repository:**
    ```bash
    git clone https://github.com/calvin-c13/sylabus-automated-google-calendar.git
-   cd sylabus-automated-google-calendar
+   cd syllabus-automated-google-calendar
 
 2. **Install Dependencies**
    ```bash
-   pip install -r requirements.txt
+   pip install google-auth google-auth-oauthlib google-auth-httplib2
+
 
 
