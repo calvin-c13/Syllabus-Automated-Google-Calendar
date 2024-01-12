@@ -63,10 +63,9 @@ while True:
         print("Invalid time zone input. Please enter a valid time zone.")
 
 
-
-
 date_of_last_class = input('Date of last day of classes (format: YYYY-MM-DD): ')
 print('\n')
+
 
 # Split the input string into year, month, and day
 year, month, day = date_of_last_class.split('-')
@@ -74,9 +73,9 @@ year = int(year)
 month = int(month)
 day = int(day)
 
+
 #Used for Google Calendar API function
 recurrence_end_date = date_of_last_class.replace('-', '')
-
 
 
 #Obtain course name from the first page
@@ -119,12 +118,15 @@ def instruction_mode(lower_text):
 def lab_existence(lower_text):
     return any(word in lower_text for word in ['lab ', 'labs '])
 
+
 def quiz_existence(lower_text):
     return any(word in lower_text for word in ['quiz ', 'quizzes '])
+
 
 def exam_existence(lower_text):
     exam_words = ['midterm', 'exam', 'final exam ', 'final ', 'final project', 'final draft']
     return any(word in lower_text for word in exam_words)
+
 
 
 
@@ -140,6 +142,8 @@ def get_days(prompt):
             return ','.join(day[0:2].upper() for day in input_days)
         else:
             print('Invalid input. Please enter valid days.')
+
+
 
 
 def start_and_end_time(start_prompt, end_prompt):
@@ -196,10 +200,6 @@ def number_of_exams():
 
 
 
-
-
-
-
 #Google Calendar Event Functions
 def lecture_recurring_event(course_name, start_time, end_time, lecture_location, first_lecture, lecture_days, service):
     event = {
@@ -213,7 +213,7 @@ def lecture_recurring_event(course_name, start_time, end_time, lecture_location,
             'timeZone': time_zone_used_for_calendar,
         },
         'recurrence': [f'RRULE:FREQ=WEEKLY;BYDAY={lecture_days};UNTIL={recurrence_end_date}'],
-        'colorId': '5',
+        'colorId': '5', #yellow color
         'reminders': {
             'useDefault': False,
             'overrides': [
@@ -225,6 +225,8 @@ def lecture_recurring_event(course_name, start_time, end_time, lecture_location,
     # Insert the event into the calendar
     calendar_id = 'primary'  # Use 'primary' for the user's primary calendar
     event = service.events().insert(calendarId=calendar_id, body=event).execute()
+
+
 
 
 def online_synch_lecture_recurring_event(course_name, start_time, end_time, first_lecture, lecture_days, service):
@@ -253,10 +255,30 @@ def online_synch_lecture_recurring_event(course_name, start_time, end_time, firs
     event = service.events().insert(calendarId=calendar_id, body=event).execute()
 
 
+def online_asynchronous_lecture_recurring_event(course_name, first_lecture, service):
+    event = {
+        'summary': f'{course_name} asynchronous work for the week',
+        'start': {
+            'dateTime': f'{year}-{first_lecture}T10:00:00',
+            'timeZone': time_zone_used_for_calendar, 
+        },
+        'end': {
+            'dateTime': f'{year}-{first_lecture}T12:00:00',
+            'timeZone': time_zone_used_for_calendar,
+        },
+        'recurrence': [f'RRULE:FREQ=WEEKLY;BYDAY=SU;UNTIL={recurrence_end_date}'],
+        'colorId': '5',
+        'reminders': {
+            'useDefault': False,
+            'overrides': [
+                {'method': 'popup', 'minutes': 60},  # Notification 1 hour before event
+            ],
+        },
+    }
 
-
-
-
+    # Insert the event into the calendar
+    calendar_id = 'primary'  # Use 'primary' for the user's primary calendar
+    event = service.events().insert(calendarId=calendar_id, body=event).execute()
 
 
 
@@ -290,16 +312,16 @@ def lab_recurring_event(course_name, start_time, end_time, lab_location, first_l
 
 def quiz_calendar_event(course_name, quiz_number, lecture_start_time, lecture_end_time, lecture_location, quiz_date):
     event = {
-        'summary': f'{course_name} {quiz_number} {lecture_location}',
+        'summary': f'{course_name} {quiz_number} {lecture_start_time} - {lecture_end_time} {lecture_location}',
         'start': {
             'dateTime': f'{year}-{quiz_date}T{lecture_start_time}:00',
-            'timeZone': 'EST',
+            'timeZone': time_zone_used_for_calendar,
         },
         'end': {
             'dateTime': f'{year}-{quiz_date}T{lecture_end_time}:00',
-            'timeZone': 'EST',
+            'timeZone': time_zone_used_for_calendar,
         },
-        'colorId': '11',
+        'colorId': '11', #red color
         'reminders': {
             'useDefault': False,
             'overrides': [
@@ -314,16 +336,17 @@ def quiz_calendar_event(course_name, quiz_number, lecture_start_time, lecture_en
 
 
 
+
 def midterm_calendar_event(course_name, exam_number, lecture_start_time, lecture_end_time, lecture_location, exam_date):
     event = {
         'summary': f'{course_name} {exam_number} {lecture_start_time} - {lecture_end_time} {lecture_location}',
         'start': {
             'dateTime': f'{year}-{exam_date}T{lecture_start_time}:00',
-            'timeZone': 'EST',
+            'timeZone': time_zone_used_for_calendar,
         },
         'end': {
             'dateTime': f'{year}-{exam_date}T{lecture_end_time}:00',
-            'timeZone': 'EST',
+            'timeZone': time_zone_used_for_calendar,
         },
         'colorId': '11',
         'reminders': {
@@ -339,16 +362,18 @@ def midterm_calendar_event(course_name, exam_number, lecture_start_time, lecture
     event = service.events().insert(calendarId=calendar_id, body=event).execute()
 
 
+
+
 def final_exam_calendar_event(course_name, final_start_time, final_end_time, lecture_location, final_exam_date):
     event = {
         'summary': f'{course_name} Final Exam {final_start_time} - {final_end_time} {lecture_location}',
         'start': {
             'dateTime': f'{year}-{final_exam_date}T{final_start_time}:00',
-            'timeZone': 'EST',
+            'timeZone': time_zone_used_for_calendar,
         },
         'end': {
             'dateTime': f'{year}-{final_exam_date}T{final_end_time}:00',
-            'timeZone': 'EST',
+            'timeZone': time_zone_used_for_calendar,
         },
         'colorId': '11',
         'reminders': {
@@ -372,11 +397,11 @@ def iterate_over_pdf(folder_name, service):
     pdf_files = glob.glob(pdf_pattern)
 
     for pdf_file in pdf_files:
-
         lower_text = extract_text(pdf_file).lower()
 
         course_name = find_first_course_code(pdf_file)
         print('\n' + course_name)
+
         course_instruction_mode = instruction_mode(lower_text)
 
         # Lecture prompt
@@ -385,12 +410,19 @@ def iterate_over_pdf(folder_name, service):
             lecture_days = get_days('Lecture meeting day(s) (separated by spaces, ex: "sun tues thurs"): ')
             lecture_start_time, lecture_end_time = start_and_end_time('Lecture start time (format - HH:MM): ', 'Lecture end time (format - HH:MM): ')
 
+
         if course_instruction_mode == 'in_person':
             lecture_location = input('Lecture location: ')
             lecture_recurring_event(course_name, lecture_start_time, lecture_end_time, lecture_location, first_lecture, lecture_days, service)
 
+
         if course_instruction_mode == 'online_synch':
             online_synch_lecture_recurring_event(course_name, lecture_start_time, lecture_end_time, first_lecture, lecture_days, service)
+        
+        
+        if course_instruction_mode == 'online_asynch':
+            online_asynchronous_lecture_recurring_event(course_name, first_lecture, service)
+
 
         lab_existence(lower_text)
         # Lab prompts if applicable
@@ -403,9 +435,6 @@ def iterate_over_pdf(folder_name, service):
             lab_recurring_event(course_name, lab_start_time, lab_end_time, lab_location, first_lab, lab_days, service)
 
 
-
-
-
         quiz_existence(lower_text)
         #Quiz prompts if applicable
         if quiz_existence(lower_text):
@@ -413,6 +442,7 @@ def iterate_over_pdf(folder_name, service):
             quizzes = number_of_quizzes()
             for quiz_number, quiz_date in quizzes.items():
                     quiz_calendar_event(course_name, quiz_number, lecture_start_time, lecture_end_time, lecture_location, quiz_date)
+
 
         exam_existence(lower_text)
         #Exam prompts if applicable
@@ -428,10 +458,7 @@ def iterate_over_pdf(folder_name, service):
 
 
 
+
 iterate_over_pdf(folder_name, service)
 
 print('ALL DONE!')
-
-
-
-
