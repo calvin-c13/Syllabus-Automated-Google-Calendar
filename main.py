@@ -13,6 +13,7 @@ from pdfminer.high_level import extract_text
 SCOPES =['https://www.googleapis.com/auth/calendar']
 credentials_file = input('Enter the path to your credentials.json file: ') #User input to their credentials.json
 
+
 def main():
     cred = None
 
@@ -35,6 +36,7 @@ def main():
 
     except HttpError as error:
         print('An error has occurred: ', error)
+
 
 service = main()
 
@@ -363,6 +365,30 @@ def midterm_calendar_event(course_name, exam_number, lecture_start_time, lecture
 
 
 
+def online_asynch_midterm_calendar_event(course_name, exam_number, exam_date):
+    event = {
+        'summary': f'{course_name} Online {exam_number}',
+        'start': {
+            'dateTime': f'{year}-{exam_date}T10:00:00',
+            'timeZone': time_zone_used_for_calendar,
+        },
+        'end': {
+            'dateTime': f'{year}-{exam_date}T12:00:00',
+            'timeZone': time_zone_used_for_calendar,
+        },
+        'colorId': '11',
+        'reminders': {
+            'useDefault': False,
+            'overrides': [
+                {'method': 'popup', 'minutes': 14 * 24 * 60},  # Notification 2 week before event
+            ],
+        },
+    }
+
+    # Insert the event into the calendar
+    calendar_id = 'primary'  # Use 'primary' for the user's primary calendar
+    event = service.events().insert(calendarId=calendar_id, body=event).execute()
+
 
 def final_exam_calendar_event(course_name, final_start_time, final_end_time, lecture_location, final_exam_date):
     event = {
@@ -419,8 +445,9 @@ def iterate_over_pdf(folder_name, service):
         if course_instruction_mode == 'online_synch':
             online_synch_lecture_recurring_event(course_name, lecture_start_time, lecture_end_time, first_lecture, lecture_days, service)
         
-        
+
         if course_instruction_mode == 'online_asynch':
+            first_lecture = input('Date of first lecture (format: MM-DD): ')
             online_asynchronous_lecture_recurring_event(course_name, first_lecture, service)
 
 
@@ -451,7 +478,12 @@ def iterate_over_pdf(folder_name, service):
             # Call the function and unpack the returned values
             only_midterm_exam_dates, final_exam_date, final_start_time, final_end_time = number_of_exams()
             for exam_number, exam_date in only_midterm_exam_dates.items():
-                midterm_calendar_event(course_name, exam_number, lecture_start_time, lecture_end_time, lecture_location, exam_date)
+                if course_instruction_mode == 'in_person' or course_instruction_mode == 'online_synch':
+                    midterm_calendar_event(course_name, exam_number, lecture_start_time, lecture_end_time, lecture_location, exam_date)
+                if course_instruction_mode == 'online_asynch':
+                    online_asynch_midterm_calendar_event(course_name, exam_number, exam_date)
+                    lecture_location = 'Online'
+
         final_exam_calendar_event(course_name, final_start_time, final_end_time, lecture_location, final_exam_date)
         
         print(end = '\n')
