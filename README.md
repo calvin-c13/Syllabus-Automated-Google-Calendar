@@ -1,4 +1,4 @@
-# College Course Syllabus Parser with Google Calendar
+# Autmoatic College Course Syllabus Parser with Google Calendar
 
 ## Overview
 
