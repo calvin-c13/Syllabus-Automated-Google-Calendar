@@ -2,7 +2,7 @@
 
 ## Overview
 
-This Python script automates the extraction of essential information from college course syllabuses in PDF format. It detects the course's instruction mode, the presence of labs, quizzes, and exams related to a course, and prompts the user for additional input to compile comprehensive information.
+This Python script automates the extraction of essential information from college course syllabuses in PDF format. It detects the course's name, the instruction mode of the course, the presence of labs, quizzes, and exams related to a course, and prompts the user for additional input to compile comprehensive information.
 
 ## Prerequisites
 
