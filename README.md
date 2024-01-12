@@ -25,11 +25,16 @@ Before using this script, make sure you have the following:
    ```bash
    git clone https://github.com/calvin-c13/syllabus-automated-google-calendar.git
    cd syllabus-automated-google-calendar
+2. **Create virtual environment**
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate
 
-2. **Install Required Modules**
+3. **Install Required Modules**
    ```bash
    pip install pdfminer.six google-auth google-auth-oauthlib google-auth-httplib2 --upgrade charset_normalizer
+   pip install google-api-python-client
 
-3. **Run the Python Script**
+4. **Run the Python Script**
    ```bash
    python3 main.py
