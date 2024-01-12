@@ -34,7 +34,6 @@ Before using this script, make sure you have the following:
    ```bash
    pip install pdfminer.six google-auth google-auth-oauthlib google-auth-httplib2
    pip install google-api-python-client
-   pip uninstall charset_normalizer 
    pip install --no-binary :all: charset_normalizer
 4. **Run the Python Script**
    ```bash
