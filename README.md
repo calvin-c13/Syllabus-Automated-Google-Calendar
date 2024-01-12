@@ -32,4 +32,4 @@ Before using this script, make sure you have the following:
 
 3. **Run the Python Script**
    ```bash
-   python your_script.py
+   python3 main.py
