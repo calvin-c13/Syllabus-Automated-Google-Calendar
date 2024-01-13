@@ -22,7 +22,7 @@ Before using this script, make sure you have the following:
 
 5. **Ensure the python script, credentials.json, token.json, and folder containing syllabuses are in the same working directory**
    
-## Usage
+## Usage (In terminal)
 
 1. **Clone the Repository:**
    ```bash
