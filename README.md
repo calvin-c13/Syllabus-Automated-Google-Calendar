@@ -11,14 +11,16 @@ Before using this script, make sure you have the following:
 1. **Python Installed:**
    - [Download Python](https://www.python.org/downloads/) if not already installed.
 
-2. **Google Developer OAuth Client ID Credentials:**
+2. **A code editor (such as VS Code) and a working Google Email account**
+
+3. **Google Developer OAuth Client ID Credentials:**
    - Obtain OAuth client ID credentials and token.json by following instructions from the [Google Calendar API Quickstart](https://developers.google.com/calendar/api/quickstart/python).
    - Be mindful to replace the scope from quickstart.py with `SCOPES = ["https://www.googleapis.com/auth/calendar"]` by removing `readonly`
 
-3. **Folder with course syllabuses in pdf form**
+4. **Folder with course syllabuses in pdf form**
    - Ensure that all the courses you want to add to Google Calendar are in a single folder and are in pdf form.
 
-4. **Ensure the python script, credentials.json, token.json, and folder containing syllabuses are in the same working directory**
+5. **Ensure the python script, credentials.json, token.json, and folder containing syllabuses are in the same working directory**
    
 ## Usage
 
