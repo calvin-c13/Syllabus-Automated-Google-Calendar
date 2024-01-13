@@ -26,7 +26,7 @@ Before using this script, make sure you have the following:
 
 1. **Clone the Repository:**
    ```bash
-   git clone https://github.com/calvin-c13/syllabus-automated-google-calendar.git
+   git clone https://github.com/calvin-c13/Syllabus-Extractor-Google-Calendar-API.git
    cd syllabus-automated-google-calendar
 2. **Create virtual environment**
    ```bash
